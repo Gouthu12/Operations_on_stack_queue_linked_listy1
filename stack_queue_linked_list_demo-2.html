@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stack, Queue &amp; Linked List Demo</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#1d2433;--mute:#667085;--line:#d9d6cc;--acc:#1f5eff;--hot:#e8590c;--ok:#2b8a3e;--node:#eef2ff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171f;--card:#1d222d;--ink:#e8eaf0;--mute:#9aa3b5;--line:#343b4b;--acc:#7aa2ff;--hot:#ff9a5c;--ok:#69db7c;--node:#262d40;color-scheme:dark}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Georgia,"Times New Roman",serif}
+main{max-width:720px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.5rem;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 18px;font-size:.95rem}
+nav{display:flex;gap:6px;margin-bottom:14px}
+nav button{flex:1;padding:10px 4px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;border-radius:8px;cursor:pointer}
+nav button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.panel{display:none;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.panel.on{display:block}
+.rule{font-size:.95rem;color:var(--mute);margin:0 0 12px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+input{width:76px;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.ctl button{padding:9px 12px;border:1px solid var(--acc);background:transparent;color:var(--acc);border-radius:8px;font:inherit;cursor:pointer}
+.ctl button.del{border-color:var(--hot);color:var(--hot)}
+.ctl button:active{background:var(--acc);color:var(--bg)}
+.stage{min-height:170px;border:1px dashed var(--line);border-radius:10px;padding:12px;display:flex;overflow-x:auto;align-items:center}
+.vstack{flex-direction:column-reverse;justify-content:flex-start;align-items:center;gap:6px;min-height:340px}
+.cell{min-width:64px;padding:10px 14px;background:var(--node);border:2px solid var(--acc);border-radius:8px;text-align:center;font-weight:bold;position:relative;flex:none}
+.cell.hl{background:var(--hot);border-color:var(--hot);color:#fff}
+.tag{position:absolute;font-size:.7rem;font-weight:normal;color:var(--hot);white-space:nowrap}
+.vstack .tag{left:calc(100% + 8px);top:50%;transform:translateY(-50%)}
+.hstack .tag{top:-18px;left:0}
+.hstack .tag.b{top:auto;bottom:-18px}
+.row{display:flex;align-items:center;gap:0;padding:22px 4px}
+.arrow{width:26px;height:2px;background:var(--mute);position:relative;flex:none}
+.arrow::after{content:"";position:absolute;right:-1px;top:-4px;border:5px solid transparent;border-left:8px solid var(--mute);border-right:0}
+.nil{color:var(--mute);font-style:italic;flex:none;padding-left:4px}
+.node{display:flex;flex:none;border:2px solid var(--acc);border-radius:8px;overflow:hidden;position:relative;background:var(--node)}
+.node span{padding:10px 12px;font-weight:bold}
+.node i{width:26px;border-left:2px solid var(--acc);display:flex;align-items:center;justify-content:center;color:var(--mute);font-style:normal;font-size:.7rem}
+.node.hl{border-color:var(--hot);background:var(--hot);color:#fff}
+.node.hl i{border-color:var(--hot);color:#fff}
+.node .tag{top:-19px;left:0}
+.empty{color:var(--mute);font-style:italic;margin:auto}
+.msg{margin:12px 0 6px;padding:10px 12px;background:var(--bg);border-left:4px solid var(--acc);border-radius:4px;font-size:.95rem;min-height:44px}
+.msg.err{border-color:var(--hot)}
+.cx{font-size:.85rem;color:var(--mute);margin:8px 0 0}
+.size{display:inline-block;margin:0 0 10px;padding:4px 14px;border:2px solid var(--ok);color:var(--ok);border-radius:999px;font-weight:bold}
+</style>
+</head>
+<body>
+<main>
+<h1>Stack, Queue &amp; Singly Linked List</h1>
+<p class="sub">Try each operation. The message under the diagram explains what happened.</p>
+<nav role="tablist">
+<button role="tab" aria-selected="true" data-t="s">Stack</button>
+<button role="tab" aria-selected="false" data-t="q">Queue</button>
+<button role="tab" aria-selected="false" data-t="l">Linked list</button>
+</nav>
+
+<section class="panel on" id="s">
+<p class="rule">LIFO: the last item pushed is the first one popped. Capacity is 6.</p>
+<div class="ctl"><input id="sv" type="number" placeholder="value"><button data-a="push">Push</button><button class="del" data-a="pop">Pop</button><button data-a="peek">Peek</button><button data-a="isEmpty">isEmpty</button><button data-a="size">size()</button></div>
+<div class="size" id="sSize"></div>
+<div class="stage vstack" id="sStage"></div>
+<div class="msg" id="sMsg">Push a value to begin.</div>
+<p class="cx">push, pop, peek: O(1) each.</p>
+</section>
+
+<section class="panel" id="q">
+<p class="rule">FIFO: the first item added is the first one removed. Capacity is 6.</p>
+<div class="ctl"><input id="qv" type="number" placeholder="value"><button data-a="enq">Enqueue</button><button class="del" data-a="deq">Dequeue</button><button data-a="front">Front</button><button data-a="isEmpty">isEmpty</button><button data-a="size">size()</button></div>
+<div class="size" id="qSize"></div>
+<div class="stage hstack" id="qStage"></div>
+<div class="msg" id="qMsg">Enqueue a value to begin.</div>
+<p class="cx">enqueue, dequeue, front: O(1) each.</p>
+</section>
+
+<section class="panel" id="l">
+<p class="rule">Each node holds data and a pointer to the next node. The last pointer is NULL.</p>
+<div class="ctl">
+<input id="lv" type="number" placeholder="value"><input id="li" type="number" placeholder="index">
+<button data-a="head">Insert head</button><button data-a="tail">Insert tail</button><button data-a="at">Insert at index</button>
+<button class="del" data-a="delHead">Delete head</button><button class="del" data-a="delVal">Delete value</button>
+<button data-a="search">Search</button><button data-a="trav">Traverse</button><button data-a="size">size()</button>
+</div>
+<div class="size" id="lSize"></div>
+<div class="stage" id="lStage" style="overflow-x:auto"></div>
+<div class="msg" id="lMsg">Insert a node to begin.</div>
+<p class="cx">Insert head: O(1). Insert tail, insert at index, delete value, search, traverse: O(n).</p>
+</section>
+</main>
+
+<script>
+var $=function(id){return document.getElementById(id)};
+var CAP=6, S=[], Q=[], L=[], busy=false;
+function say(id,t,err){var m=$(id);m.textContent=t;m.className="msg"+(err?" err":"")}
+function val(id){var v=$(id).value;if(v===""){return null}$(id).value="";return Number(v)}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+
+document.querySelectorAll("nav button").forEach(function(b){b.onclick=function(){
+ document.querySelectorAll("nav button").forEach(function(x){x.setAttribute("aria-selected",x===b)});
+ document.querySelectorAll(".panel").forEach(function(p){p.classList.toggle("on",p.id===b.dataset.t)});
+}});
+
+function drawS(hl){
+ var h=S.length?"":'<div class="empty">Stack is empty</div>';
+ S.forEach(function(v,i){h+='<div class="cell'+(i===hl?" hl":"")+'">'+v+(i===S.length-1?'<span class="tag">&larr; TOP</span>':"")+"</div>"});
+ $("sStage").innerHTML=h;$("sSize").textContent="Size: "+S.length+" / "+CAP;
+}
+function drawQ(hl){
+ var h=Q.length?"":'<div class="empty">Queue is empty</div>';
+ Q.forEach(function(v,i){h+='<div class="cell'+(i===hl?" hl":"")+'" style="margin-right:8px">'+v+(i===0?'<span class="tag">FRONT</span>':"")+(i===Q.length-1?'<span class="tag b">REAR</span>':"")+"</div>"});
+ $("qStage").innerHTML=h;$("qSize").textContent="Size: "+Q.length+" / "+CAP;
+}
+function drawL(hl){
+ var h='<div class="row">';
+ if(!L.length){h+='<span class="nil">head &rarr; NULL</span>'}
+ else{
+  L.forEach(function(v,i){
+   h+='<div class="node'+(i===hl?" hl":"")+'">'+(i===0?'<span class="tag">HEAD</span>':"")+"<span>"+v+"</span><i>next</i></div>"+'<div class="arrow"></div>';
+  });
+  h+='<span class="nil">NULL</span>';
+ }
+ $("lStage").innerHTML=h+"</div>";$("lSize").textContent="Size: "+L.length+(L.length===1?" node":" nodes");
+}
+
+document.querySelector("#s .ctl").onclick=function(e){
+ var a=e.target.dataset.a;if(!a)return;
+ if(a==="push"){var v=val("sv");if(v===null)return say("sMsg","Enter a value first.",1);
+  if(S.length>=CAP)return say("sMsg","Stack overflow: "+CAP+" items is the limit.",1);
+  S.push(v);drawS(S.length-1);say("sMsg","Pushed "+v+". It sits on top; TOP moved up one position.")}
+ if(a==="pop"){if(!S.length)return say("sMsg","Stack underflow: nothing to pop.",1);
+  var p=S.pop();drawS();say("sMsg","Popped "+p+" from the top. Size is now "+S.length+".")}
+ if(a==="peek"){if(!S.length)return say("sMsg","Stack is empty: nothing to peek.",1);
+  drawS(S.length-1);say("sMsg","Top element is "+S[S.length-1]+". Peek does not remove it.")}
+ if(a==="size"){say("sMsg","size() returns "+S.length+" (capacity "+CAP+").")}
+ if(a==="isEmpty"){say("sMsg","isEmpty() returns "+(S.length===0)+". Size is "+S.length+".")}
+};
+document.querySelector("#q .ctl").onclick=function(e){
+ var a=e.target.dataset.a;if(!a)return;
+ if(a==="enq"){var v=val("qv");if(v===null)return say("qMsg","Enter a value first.",1);
+  if(Q.length>=CAP)return say("qMsg","Queue overflow: "+CAP+" items is the limit.",1);
+  Q.push(v);drawQ(Q.length-1);say("qMsg","Enqueued "+v+" at the rear.")}
+ if(a==="deq"){if(!Q.length)return say("qMsg","Queue underflow: nothing to dequeue.",1);
+  var p=Q.shift();drawQ();say("qMsg","Dequeued "+p+" from the front. The next item is now the front.")}
+ if(a==="front"){if(!Q.length)return say("qMsg","Queue is empty: no front element.",1);
+  drawQ(0);say("qMsg","Front element is "+Q[0]+". It is not removed.")}
+ if(a==="size"){say("qMsg","size() returns "+Q.length+" (capacity "+CAP+").")}
+ if(a==="isEmpty"){say("qMsg","isEmpty() returns "+(Q.length===0)+". Size is "+Q.length+".")}
+};
+document.querySelector("#l .ctl").onclick=async function(e){
+ var a=e.target.dataset.a;if(!a||busy)return;
+ if(a==="head"){var v=val("lv");if(v===null)return say("lMsg","Enter a value first.",1);
+  L.unshift(v);drawL(0);say("lMsg","New node "+v+" points to the old head, then head points to it. One step: O(1).")}
+ if(a==="tail"){var v=val("lv");if(v===null)return say("lMsg","Enter a value first.",1);
+  await walk(L.length-1,"Walking to the last node…");
+  L.push(v);drawL(L.length-1);say("lMsg","Last node now points to the new node "+v+", which points to NULL.")}
+ if(a==="at"){var v=val("lv"),i=val("li");if(v===null||i===null)return say("lMsg","Enter a value and an index.",1);
+  if(i<0||i>L.length||i%1)return say("lMsg","Index must be a whole number from 0 to "+L.length+".",1);
+  await walk(i-1,"Walking to index "+(i-1)+"…");
+  L.splice(i,0,v);drawL(i);say("lMsg","Inserted "+v+" at index "+i+": new node points to the next node, previous node points to the new one.")}
+ if(a==="delHead"){if(!L.length)return say("lMsg","List is empty: nothing to delete.",1);
+  var p=L.shift();drawL();say("lMsg","Deleted head "+p+". Head now points to the second node.")}
+ if(a==="delVal"){var v=val("lv");if(v===null)return say("lMsg","Enter a value to delete.",1);
+  var i=L.indexOf(v);await walk(i<0?L.length-1:i,"Searching for "+v+"…");
+  if(i<0){drawL();return say("lMsg",v+" was not found. List unchanged.",1)}
+  L.splice(i,1);drawL();say("lMsg","Deleted "+v+": the previous node now points past it.")}
+ if(a==="search"){var v=val("lv");if(v===null)return say("lMsg","Enter a value to search for.",1);
+  var i=L.indexOf(v);await walk(i<0?L.length-1:i,"Searching for "+v+"…");
+  if(i<0){drawL();say("lMsg",v+" not found after checking all "+L.length+" nodes.",1)}
+  else{drawL(i);say("lMsg","Found "+v+" at index "+i+" after "+(i+1)+" comparisons.")}}
+ if(a==="size"){say("lMsg","size() returns "+L.length+". Counting requires walking the list, so it is O(n) unless a size counter is stored.")}
+ if(a==="trav"){if(!L.length)return say("lMsg","List is empty: nothing to traverse.",1);
+  await walk(L.length-1,"Traversing from head…");drawL();say("lMsg","Visited every node: "+L.join(" → ")+" → NULL.")}
+};
+async function walk(end,text){
+ if(end<0||!L.length){drawL();return}
+ busy=true;say("lMsg",text);
+ for(var i=0;i<=end;i++){drawL(i);await sleep(450)}
+ busy=false;
+}
+drawS();drawQ();drawL();
+</script>
+</body>
+</html>
